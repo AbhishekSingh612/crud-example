@@ -1,3 +1,5 @@
+import { log } from "../utility/logger";
+
 const KV = crud_namespace;
 
 export async function putItem(id, data) {
@@ -20,6 +22,7 @@ export async function getAll() {
 }
 
 export async function updateItemInDb(id, data) {
+    log("Updating KV", { id, data });
     return KV.put(id, JSON.stringify(data));
 }
 

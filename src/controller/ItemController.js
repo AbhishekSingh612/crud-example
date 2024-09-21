@@ -1,25 +1,41 @@
-import { createItem, getItem, getAllItems, updateItem, deleteItem } from '../service/ItemService.js';
+import { Router, withContent } from 'itty-router';
+import {
+  createItem,
+  getItem,
+  getAllItems,
+  updateItem,
+  deleteItem,
+} from '../service/ItemService.js';
+import { log } from '../utility/logger.js';
 
-export async function handleRequest(request) {
-  const url = new URL(request.url);
-  const match = url.pathname.match(/^\/api\/items(?:\/([^\/]+))?\/?$/);
+const itemRouter = Router();
 
-  if (!match) {
-    return new Response("Not Found", { status: 404 });
-  }
+itemRouter.get("/api/items", async () => {
+  return await getAllItems();
+});
 
-  const id = match[1];
+itemRouter.get("/api/items/:id", async ({ params }) => {
+  const id = params.id;
+  return await getItem(id);
+});
 
-  switch (request.method) {
-    case 'POST':
-      return createItem(request);
-    case 'GET':
-      return id ? getItem(id) : getAllItems();
-    case 'PUT':
-      return id ? updateItem(request, id) : new Response("ID required for PUT", { status: 400 });
-    case 'DELETE':
-      return id ? deleteItem(id) : new Response("ID required for DELETE", { status: 400 });
-    default:
-      return new Response("Method Not Allowed", { status: 405 });
-  }
-}
+itemRouter.post("/api/items", async (request) => {
+  log("Create Item request: ", {request});
+  return await createItem(request);
+});
+
+itemRouter.put("/api/items/:id", withContent, async ({ content, params }) => {
+  log("Update controller: ", { content, params });
+  const id = params.id;
+  return await updateItem(content, id);
+});
+
+itemRouter.delete("/api/items/:id", async ({ params }) => {
+  const id = params.id;
+  return await deleteItem(id);
+});
+
+// Fallback for unsupported methods
+itemRouter.all("*", () => new Response("Method Not Allowed", { status: 405 }));
+
+export default itemRouter;
